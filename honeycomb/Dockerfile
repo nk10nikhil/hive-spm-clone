@@ -31,5 +31,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Expose port
 EXPOSE 3000
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Override the default entrypoint to skip noisy scripts
+ENTRYPOINT []
+CMD ["sh", "-c", "echo '[Beeline] Frontend ready at http://localhost:3000' && exec nginx -g 'daemon off;' 2>/dev/null"]

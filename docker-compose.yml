@@ -76,6 +76,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=aden_tsdb
+    command: ["postgres", "-c", "log_min_messages=warning", "-c", "log_statement=none"]
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
       # Auto-run schema files on first startup (alphabetical order)
@@ -98,10 +99,11 @@ services:
     container_name: honeycomb-mongodb
     ports:
       - "${MONGODB_PORT:-27017}:27017"
+    command: ["mongod", "--quiet", "--logpath", "/dev/null"]
     volumes:
       - mongodb_data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -116,6 +118,7 @@ services:
     container_name: honeycomb-redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
+    command: ["redis-server", "--loglevel", "warning"]
     volumes:
       - redis_data:/data
     healthcheck:
