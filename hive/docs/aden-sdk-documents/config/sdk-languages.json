@@ -1,0 +1,10 @@
+{
+  "python": {
+    "name": "Python",
+    "adenPackage": "aden-py"
+  },
+  "javascript": {
+    "name": "JavaScript/TypeScript",
+    "adenPackage": "aden-ts"
+  }
+}
