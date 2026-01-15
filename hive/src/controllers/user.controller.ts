@@ -35,9 +35,10 @@ const EMAIL_REGEX =
  */
 router.post(
   "/login-v2",
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, _next: NextFunction) => {
     try {
-      let { email, password } = req.body;
+      let { email } = req.body;
+      const { password } = req.body;
 
       // Validate required fields
       if (
@@ -102,32 +103,29 @@ router.post(
         current_team_id: result.current_team_id,
         create_time: result.created_at,
       });
-    } catch (err: any) {
-      console.error("[UserController] login-v2 error:", err.message);
+    } catch (err) {
+      const error = err as { message?: string; code?: string };
+      console.error("[UserController] login-v2 error:", error.message);
 
       // Handle specific error codes
-      if (err.code === "USER_NOT_FOUND") {
-        return res.status(401).json({
-          success: false,
-          msg: "User not found. Please sign up for an account.",
-        });
-      }
-
-      if (err.code === "INVALID_CREDENTIALS") {
+      if (
+        error.code === "USER_NOT_FOUND" ||
+        error.code === "INVALID_CREDENTIALS"
+      ) {
         return res.status(401).json({
           success: false,
           msg: "Invalid email or password",
         });
       }
 
-      if (err.code === "OAUTH_REQUIRED") {
+      if (error.code === "OAUTH_REQUIRED") {
         return res.status(400).json({
           success: false,
-          msg: err.message,
+          msg: error.message,
         });
       }
 
-      if (err.code === "ACCOUNT_DISABLED") {
+      if (error.code === "ACCOUNT_DISABLED") {
         return res.status(403).json({
           success: false,
           msg: "Your account has been disabled",
@@ -151,7 +149,8 @@ router.post(
  */
 router.post("/register", async (req: Request, res: Response) => {
   try {
-    let { email, password, name, firstname, lastname } = req.body;
+    let { email } = req.body;
+    const { password, name, firstname, lastname } = req.body;
 
     // Validate required fields
     if (
@@ -479,7 +478,7 @@ router.post("/generate-dev-token", async (req: Request, res: Response) => {
  */
 const DEFAULT_UI_SETTINGS = {
   sidebarCollapsed: false,
-  performanceDashboardTimeRange: 'today',
+  performanceDashboardTimeRange: "today",
 };
 
 /**
@@ -511,8 +510,11 @@ router.get("/settings", async (req: Request, res: Response) => {
     // Extract UI settings from preferences, merge with defaults
     const preferences = user.preferences || {};
     const uiSettings = {
-      sidebarCollapsed: preferences.sidebarCollapsed ?? DEFAULT_UI_SETTINGS.sidebarCollapsed,
-      performanceDashboardTimeRange: preferences.performanceDashboardTimeRange ?? DEFAULT_UI_SETTINGS.performanceDashboardTimeRange,
+      sidebarCollapsed:
+        preferences.sidebarCollapsed ?? DEFAULT_UI_SETTINGS.sidebarCollapsed,
+      performanceDashboardTimeRange:
+        preferences.performanceDashboardTimeRange ??
+        DEFAULT_UI_SETTINGS.performanceDashboardTimeRange,
     };
 
     res.json({
@@ -558,7 +560,7 @@ router.put("/settings", async (req: Request, res: Response) => {
 
     // Build update object with only provided fields
     const updates: Record<string, any> = {};
-    if (typeof sidebarCollapsed === 'boolean') {
+    if (typeof sidebarCollapsed === "boolean") {
       updates.sidebarCollapsed = sidebarCollapsed;
     }
     if (performanceDashboardTimeRange !== undefined) {
@@ -576,23 +578,28 @@ router.put("/settings", async (req: Request, res: Response) => {
     if (pgPool) {
       // PostgreSQL - use JSONB
       await pgPool.query(
-        'UPDATE users SET preferences = $1, updated_at = NOW() WHERE id = $2',
+        "UPDATE users SET preferences = $1, updated_at = NOW() WHERE id = $2",
         [JSON.stringify(newPreferences), user.id]
       );
     } else if (mysqlPool) {
       // MySQL - use JSON column
       await mysqlPool.query(
-        'UPDATE user SET preferences = ?, updated_at = NOW() WHERE id = ?',
+        "UPDATE user SET preferences = ?, updated_at = NOW() WHERE id = ?",
         [JSON.stringify(newPreferences), user.id]
       );
     } else {
-      console.warn("[UserController] PUT /settings: No database pool available, settings not persisted");
+      console.warn(
+        "[UserController] PUT /settings: No database pool available, settings not persisted"
+      );
     }
 
     // Return updated settings
     const uiSettings = {
-      sidebarCollapsed: newPreferences.sidebarCollapsed ?? DEFAULT_UI_SETTINGS.sidebarCollapsed,
-      performanceDashboardTimeRange: newPreferences.performanceDashboardTimeRange ?? DEFAULT_UI_SETTINGS.performanceDashboardTimeRange,
+      sidebarCollapsed:
+        newPreferences.sidebarCollapsed ?? DEFAULT_UI_SETTINGS.sidebarCollapsed,
+      performanceDashboardTimeRange:
+        newPreferences.performanceDashboardTimeRange ??
+        DEFAULT_UI_SETTINGS.performanceDashboardTimeRange,
     };
 
     res.json({
