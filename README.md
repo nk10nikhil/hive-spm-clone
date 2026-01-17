@@ -1,7 +1,3 @@
-# Hive
-
-Hive is the easiest way to create reliable agents that self-adapt.
-
 <p align="center">
   <img width="100%" alt="Hive Banner" src="https://storage.googleapis.com/aden-prod-assets/website/aden-title-card.png" />
 </p>
