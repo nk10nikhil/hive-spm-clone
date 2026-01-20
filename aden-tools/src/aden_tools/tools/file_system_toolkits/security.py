@@ -1,13 +1,13 @@
 import os
 
-WORKSPACES_DIR = os.path.abspath(os.path.join(os.getcwd(), "workspaces"))
+WORKSPACES_DIR = os.path.abspath(os.path.join(os.getcwd(), "workdir/workspaces"))
 
 def get_secure_path(path: str, workspace_id: str, agent_id: str, session_id: str) -> str:
     """Resolve and verify a path within a 3-layer sandbox (workspace/agent/session)."""
     if not workspace_id or not agent_id or not session_id:
         raise ValueError("workspace_id, agent_id, and session_id are all required")
-        
-    # Ensure session directory exists: workspaces/workspace_id/agent_id/session_id
+
+    # Ensure session directory exists: runtime/workspace_id/agent_id/session_id
     session_dir = os.path.join(WORKSPACES_DIR, workspace_id, agent_id, session_id)
     os.makedirs(session_dir, exist_ok=True)
     
