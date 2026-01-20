@@ -81,71 +81,48 @@ docker compose up
 Traditional agent frameworks require you to manually design workflows, define agent interactions, and handle failures reactively. Aden flips this paradigm—**you describe outcomes, and the system builds itself**.
 
 ```mermaid
-flowchart TB
-    subgraph BUILD["🏗️ AGENT BUILD PROCESS"]
-        direction LR
-        GOAL["🎯 Define Goal<br/>+ Success Criteria"]
-        BUILDER["🤖 Builder Agent<br/>(Claude/LLM)"]
-        GRAPH["Create Agent Graph<br/>• Add Nodes<br/>• Define Edges<br/>• Test & Validate"]
-        EXPORT["📦 Export<br/>agent.json<br/>tools.py<br/>mcp_servers.json"]
-
-        GOAL --> BUILDER
-        BUILDER --> GRAPH
-        GRAPH --> EXPORT
+flowchart LR
+    subgraph BUILD["🏗️ BUILD"]
+        GOAL["Define Goal<br/>+ Success Criteria"] --> NODES["Add Nodes<br/>LLM/Router/Function"]
+        NODES --> EDGES["Connect Edges<br/>on_success/failure/conditional"]
+        EDGES --> TEST["Test & Validate"] --> APPROVE["Approve & Export"]
     end
 
-    subgraph RUNTIME["🚀 AGENT EXECUTION"]
-        direction LR
-        INPUT["💬 User Input"]
-        RUNNER["AgentRunner<br/>• Load agent.json<br/>• ToolRegistry<br/>• MCP Integration"]
-        EXECUTOR["Graph Executor<br/>• Step-by-step<br/>• State management"]
+    subgraph EXPORT["📦 EXPORT"]
+        direction TB
+        JSON["agent.json<br/>(GraphSpec)"]
+        TOOLS["tools.py<br/>(Functions)"]
+        MCP["mcp_servers.json<br/>(Integrations)"]
+    end
 
-        subgraph NODES["Node Execution"]
-            direction TB
-            LLM_NODE["LLM Nodes<br/>(generate/tool use)"]
-            ROUTER["Router Nodes<br/>(conditional/LLM)"]
-            FUNC["Function Nodes"]
-            HITL["Human-in-the-Loop"]
+    subgraph RUN["🚀 RUNTIME"]
+        LOAD["AgentRunner<br/>Load + Parse"] --> SETUP["Setup Runtime<br/>+ ToolRegistry"]
+        SETUP --> EXEC["GraphExecutor<br/>Execute Nodes"]
+
+        subgraph DECISION["Decision Recording"]
+            DEC1["runtime.decide()<br/>intent → options → choice"]
+            DEC2["runtime.record_outcome()<br/>success, result, metrics"]
         end
-
-        INPUT --> RUNNER
-        RUNNER --> EXECUTOR
-        EXECUTOR --> NODES
     end
 
-    subgraph INFRA["⚙️ CORE INFRASTRUCTURE"]
-        direction LR
-
-        subgraph CTX["Node Context (Runtime)"]
-            direction TB
-            RUNTIME_DEC["Decision Recorder<br/>intent → options → choice"]
-            MEMORY["Shared Memory"]
-            TOOLS["Tool Access"]
-        end
-
-        LLM["🧠 LLM Providers<br/>Claude • GPT-4 • Gemini"]
-
-        STORAGE[("💾 Storage<br/>Decision History<br/>Metrics & Analytics")]
-
-        DASHBOARD["📊 Dashboard<br/>Monitoring • Costs • KPIs"]
+    subgraph INFRA["⚙️ INFRASTRUCTURE"]
+        CTX["NodeContext<br/>memory • llm • tools"]
+        STORE[("FileStorage<br/>Runs & Decisions")]
     end
 
-    EXPORT --> RUNNER
-    NODES --> CTX
-    CTX --> LLM
-    CTX --> STORAGE
-    STORAGE --> DASHBOARD
-    STORAGE -.->|Self-Improve| BUILDER
+    APPROVE --> EXPORT
+    EXPORT --> LOAD
+    EXEC --> DECISION
+    EXEC --> CTX
+    DECISION --> STORE
+    STORE -.->|"Analyze & Improve"| NODES
 
-    style BUILD fill:#bbdefb,stroke:#1565c0,stroke-width:2px,color:#000
-    style RUNTIME fill:#ffe082,stroke:#ef6c00,stroke-width:2px,color:#000
-    style INFRA fill:#e1bee7,stroke:#7b1fa2,stroke-width:2px,color:#000
-    style NODES fill:#ffcc80,stroke:#e65100,stroke-width:2px,color:#000
-    style CTX fill:#f8bbd0,stroke:#c2185b,stroke-width:2px,color:#000
-    style GOAL fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
-    style EXPORT fill:#fff59d,stroke:#f57f17,stroke-width:2px,color:#000
-    style STORAGE fill:#b0bec5,stroke:#455a64,stroke-width:2px,color:#000
-    style DASHBOARD fill:#b2ebf2,stroke:#00838f,stroke-width:2px,color:#000
+    style BUILD fill:#ffbe42,stroke:#cc5d00,stroke-width:3px,color:#333
+    style EXPORT fill:#fff59d,stroke:#ed8c00,stroke-width:2px,color:#333
+    style RUN fill:#ffb100,stroke:#cc5d00,stroke-width:3px,color:#333
+    style DECISION fill:#ffcc80,stroke:#ed8c00,stroke-width:2px,color:#333
+    style INFRA fill:#e8763d,stroke:#cc5d00,stroke-width:3px,color:#fff
+    style STORE fill:#ed8c00,stroke:#cc5d00,stroke-width:2px,color:#fff
 ```
 
 ### The Aden Advantage
