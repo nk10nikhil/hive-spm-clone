@@ -122,7 +122,7 @@ This is an opportunity to work on cutting-edge AI infrastructure alongside a sma
    - Respond to code review feedback
 
 4. **Submit your application:**
-   - Email: `careers@adenhq.com`
+   - Email: `contact@adenhq.com`
    - Subject: `[SDE] Your Name`
    - Include:
      - Resume/CV
@@ -152,6 +152,6 @@ This is an opportunity to work on cutting-edge AI infrastructure alongside a sma
 
 ---
 
-**Questions?** Email us at `careers@adenhq.com` or open an issue on [GitHub](https://github.com/adenhq/hive).
+**Questions?** Email us at `contact@adenhq.com` or open an issue on [GitHub](https://github.com/adenhq/hive).
 
 Made with 🔥 Passion in San Francisco
