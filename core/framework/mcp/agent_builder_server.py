@@ -1127,6 +1127,46 @@ def export_graph() -> str:
     entry_node = validation["entry_node"]
     terminal_nodes = validation["terminal_nodes"]
 
+    # Extract pause/resume configuration from validation
+    pause_nodes = validation.get("pause_nodes", [])
+    resume_entry_points = validation.get("resume_entry_points", [])
+
+    # Build entry_points dict for pause/resume architecture
+    entry_points = {}
+    if entry_node:
+        entry_points["start"] = entry_node
+
+    # Add resume entry points with {pause_node}_resume naming convention
+    if pause_nodes and resume_entry_points:
+        # Strategy 1: Try to match by checking which resume node uses the pause node's outputs
+        pause_to_resume = {}
+        for pause_node_id in pause_nodes:
+            pause_node = next((n for n in session.nodes if n.id == pause_node_id), None)
+            if not pause_node:
+                continue
+
+            # Find resume nodes that read the outputs of this pause node
+            for resume_node_id in resume_entry_points:
+                resume_node = next((n for n in session.nodes if n.id == resume_node_id), None)
+                if not resume_node:
+                    continue
+
+                # Check if resume node reads pause node's outputs
+                shared_keys = set(pause_node.output_keys) & set(resume_node.input_keys)
+                if shared_keys:
+                    pause_to_resume[pause_node_id] = resume_node_id
+                    break
+
+        # Strategy 2: Fallback - pair sequentially if no match found
+        unmatched_pause = [p for p in pause_nodes if p not in pause_to_resume]
+        unmatched_resume = [r for r in resume_entry_points if r not in pause_to_resume.values()]
+        for pause_id, resume_id in zip(unmatched_pause, unmatched_resume):
+            pause_to_resume[pause_id] = resume_id
+
+        # Build entry_points dict
+        for pause_id, resume_id in pause_to_resume.items():
+            entry_points[f"{pause_id}_resume"] = resume_id
+
     # Build edges list
     edges_list = [
         {
@@ -1171,6 +1211,8 @@ def export_graph() -> str:
         "goal_id": session.goal.id,
         "version": "1.0.0",
         "entry_node": entry_node,
+        "entry_points": entry_points,
+        "pause_nodes": pause_nodes,
         "terminal_nodes": terminal_nodes,
         "nodes": [node.model_dump() for node in session.nodes],
         "edges": edges_list,
