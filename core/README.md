@@ -128,6 +128,29 @@ runtime.record_outcome(
 runtime.end_run(success=True, narrative="Successfully processed all data")
 ```
 
+### Testing Agents
+
+The framework includes a goal-based testing framework for validating agent behavior.
+
+```bash
+# Generate tests from a goal definition
+python -m framework test-generate goal.json
+
+# Interactively approve generated tests
+python -m framework test-approve <goal_id>
+
+# Run tests against an agent
+python -m framework test-run <agent_path> --parallel 4
+
+# Debug failed tests
+python -m framework test-debug <goal_id> <test_id>
+
+# List tests by status
+python -m framework test-list <goal_id>
+```
+
+For detailed testing workflows, see the [testing-agent skill](.claude/skills/testing-agent/SKILL.md).
+
 ### Analyzing with Builder
 
 ```python
