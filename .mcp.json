@@ -3,9 +3,9 @@
     "agent-builder": {
       "command": "python",
       "args": ["-m", "framework.mcp.agent_builder_server"],
-      "cwd": "/Users/acho-admin/acho/local-oss/hive/core",
+      "cwd": "core",
       "env": {
-        "PYTHONPATH": "/Users/acho-admin/acho/local-oss/hive/aden-tools/src"
+        "PYTHONPATH": "../aden-tools/src"
       }
     }
   }
