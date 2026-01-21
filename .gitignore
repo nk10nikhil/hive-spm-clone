@@ -5,6 +5,7 @@ node_modules/
 # Build outputs
 dist/
 build/
+workdir/
 .next/
 out/
 
@@ -64,3 +65,5 @@ core/data/
 .cache/
 tmp/
 temp/
+
+exports/*

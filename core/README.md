@@ -151,7 +151,9 @@ python -m framework test-list <goal_id>
 
 For detailed testing workflows, see the [testing-agent skill](.claude/skills/testing-agent/SKILL.md).
 
-### Analyzing with Builder
+### Analyzing Agent Behavior with Builder
+
+The BuilderQuery interface allows you to analyze agent runs and identify improvements:
 
 ```python
 from framework import BuilderQuery
