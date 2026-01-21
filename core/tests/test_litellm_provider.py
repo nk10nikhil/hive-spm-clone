@@ -237,3 +237,96 @@ class TestToolConversion:
         assert result["function"]["description"] == "Search the web"
         assert result["function"]["parameters"]["properties"]["query"]["type"] == "string"
         assert result["function"]["parameters"]["required"] == ["query"]
+
+
+class TestAnthropicProviderBackwardCompatibility:
+    """Test AnthropicProvider backward compatibility with LiteLLM backend."""
+
+    def test_anthropic_provider_is_llm_provider(self):
+        """Test that AnthropicProvider implements LLMProvider interface."""
+        provider = AnthropicProvider(api_key="test-key")
+        assert isinstance(provider, LLMProvider)
+
+    def test_anthropic_provider_init_defaults(self):
+        """Test AnthropicProvider initialization with defaults."""
+        provider = AnthropicProvider(api_key="test-key")
+        assert provider.model == "claude-sonnet-4-20250514"
+        assert provider.api_key == "test-key"
+
+    def test_anthropic_provider_init_custom_model(self):
+        """Test AnthropicProvider initialization with custom model."""
+        provider = AnthropicProvider(api_key="test-key", model="claude-3-haiku-20240307")
+        assert provider.model == "claude-3-haiku-20240307"
+
+    def test_anthropic_provider_uses_litellm_internally(self):
+        """Test that AnthropicProvider delegates to LiteLLMProvider."""
+        provider = AnthropicProvider(api_key="test-key", model="claude-3-haiku-20240307")
+        assert isinstance(provider._provider, LiteLLMProvider)
+        assert provider._provider.model == "claude-3-haiku-20240307"
+        assert provider._provider.api_key == "test-key"
+
+    @patch("litellm.completion")
+    def test_anthropic_provider_complete(self, mock_completion):
+        """Test AnthropicProvider.complete() delegates to LiteLLM."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Hello from Claude!"
+        mock_response.choices[0].finish_reason = "stop"
+        mock_response.model = "claude-3-haiku-20240307"
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+        mock_completion.return_value = mock_response
+
+        provider = AnthropicProvider(api_key="test-key", model="claude-3-haiku-20240307")
+        result = provider.complete(
+            messages=[{"role": "user", "content": "Hello"}],
+            system="You are helpful.",
+            max_tokens=100
+        )
+
+        assert result.content == "Hello from Claude!"
+        assert result.model == "claude-3-haiku-20240307"
+        assert result.input_tokens == 10
+        assert result.output_tokens == 5
+
+        mock_completion.assert_called_once()
+        call_kwargs = mock_completion.call_args[1]
+        assert call_kwargs["model"] == "claude-3-haiku-20240307"
+        assert call_kwargs["api_key"] == "test-key"
+
+    @patch("litellm.completion")
+    def test_anthropic_provider_complete_with_tools(self, mock_completion):
+        """Test AnthropicProvider.complete_with_tools() delegates to LiteLLM."""
+        # Mock a simple response (no tool calls)
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "The time is 3:00 PM."
+        mock_response.choices[0].message.tool_calls = None
+        mock_response.choices[0].finish_reason = "stop"
+        mock_response.model = "claude-3-haiku-20240307"
+        mock_response.usage.prompt_tokens = 20
+        mock_response.usage.completion_tokens = 10
+        mock_completion.return_value = mock_response
+
+        provider = AnthropicProvider(api_key="test-key", model="claude-3-haiku-20240307")
+
+        tools = [
+            Tool(
+                name="get_time",
+                description="Get current time",
+                parameters={"properties": {}, "required": []}
+            )
+        ]
+
+        def tool_executor(tool_use: ToolUse) -> ToolResult:
+            return ToolResult(tool_use_id=tool_use.id, content="3:00 PM", is_error=False)
+
+        result = provider.complete_with_tools(
+            messages=[{"role": "user", "content": "What time is it?"}],
+            system="You are a time assistant.",
+            tools=tools,
+            tool_executor=tool_executor
+        )
+
+        assert result.content == "The time is 3:00 PM."
+        mock_completion.assert_called_once()
