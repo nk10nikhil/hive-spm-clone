@@ -29,12 +29,14 @@ class TestRuntimeBasics:
 
         assert runtime.current_run is None
 
-    def test_cannot_end_without_start(self, tmp_path: Path):
-        """Cannot end a run that wasn't started."""
+    def test_end_without_start_is_graceful(self, tmp_path: Path):
+        """Ending a run that wasn't started logs warning but doesn't raise."""
         runtime = Runtime(tmp_path)
 
-        with pytest.raises(RuntimeError, match="No run in progress"):
-            runtime.end_run(success=True)
+        # Should not raise - gracefully handles the case
+        runtime.end_run(success=True)
+        # Run is still None
+        assert runtime.current_run is None
 
     def test_run_saved_on_end(self, tmp_path: Path):
         """Run is saved to storage when ended."""
@@ -76,17 +78,19 @@ class TestDecisionRecording:
 
         runtime.end_run(success=True)
 
-    def test_decision_requires_run(self, tmp_path: Path):
-        """Cannot record decisions without a run."""
+    def test_decision_without_run_is_graceful(self, tmp_path: Path):
+        """Recording decisions without a run logs warning and returns empty string."""
         runtime = Runtime(tmp_path)
 
-        with pytest.raises(RuntimeError, match="No run in progress"):
-            runtime.decide(
-                intent="Test",
-                options=[{"id": "a", "description": "A"}],
-                chosen="a",
-                reasoning="Test",
-            )
+        # Should not raise - gracefully handles the case
+        result = runtime.decide(
+            intent="Test",
+            options=[{"id": "a", "description": "A"}],
+            chosen="a",
+            reasoning="Test",
+        )
+        # Returns empty string when no run in progress
+        assert result == ""
 
     def test_decision_with_node_context(self, tmp_path: Path):
         """Test decision with node ID context."""
