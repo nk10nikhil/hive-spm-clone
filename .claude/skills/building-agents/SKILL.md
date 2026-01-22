@@ -10,6 +10,7 @@ Build goal-driven agents as **Python service packages** with direct file manipul
 ## Architecture: Python Services (Not JSON Configs)
 
 Agents are built as Python packages:
+
 ```
 exports/my_agent/
 ├── __init__.py          # Package exports
@@ -21,6 +22,7 @@ exports/my_agent/
 ```
 
 **Key Principle: Agent is visible and editable during build**
+
 - ✅ Files created immediately as components are approved
 - ✅ User can watch files grow in their editor
 - ✅ No session state - just direct file writes
@@ -30,19 +32,22 @@ exports/my_agent/
 
 **Goal**: Success criteria and constraints (written to agent.py)
 
-**Node**: Unit of work (written to nodes/__init__.py)
+**Node**: Unit of work (written to nodes/**init**.py)
+
 - `llm_generate` - Text generation, parsing
 - `llm_tool_use` - Actions requiring tools
 - `router` - Conditional branching
 - `function` - Deterministic operations
 
 **Edge**: Connection between nodes (written to agent.py)
+
 - `on_success` - Proceed if node succeeds
 - `on_failure` - Handle errors
 - `always` - Always proceed
 - `conditional` - Based on expression
 
 **Pause/Resume**: Multi-turn conversations
+
 - Pause nodes stop execution, wait for user input
 - Resume entry points continue from pause with user's response
 
@@ -75,13 +80,22 @@ mcp__agent-builder__list_mcp_tools(server_name="aden-tools")
 ```
 
 This returns available tools with their descriptions and parameters:
+
 ```json
 {
   "success": true,
   "tools_by_server": {
     "aden-tools": [
-      {"name": "web_search", "description": "Search the web...", "parameters": ["query"]},
-      {"name": "web_scrape", "description": "Scrape a URL...", "parameters": ["url"]}
+      {
+        "name": "web_search",
+        "description": "Search the web...",
+        "parameters": ["query"]
+      },
+      {
+        "name": "web_scrape",
+        "description": "Scrape a URL...",
+        "parameters": ["url"]
+      }
     ]
   },
   "total_tools": 14
@@ -91,6 +105,7 @@ This returns available tools with their descriptions and parameters:
 ### Step 3: Validate Before Adding Nodes
 
 Before writing a node with `tools=[...]`:
+
 1. Call `list_mcp_tools()` to get available tools
 2. Check each tool in your node exists in the response
 3. If a tool doesn't exist:
@@ -144,6 +159,7 @@ else:
 ### The Key Difference
 
 **OLD (Bad):**
+
 ```
 MCP add_node → Session State → MCP add_node → Session State → ...
                                                                 ↓
@@ -153,6 +169,7 @@ MCP add_node → Session State → MCP add_node → Session State → ...
 ```
 
 **NEW (Good):**
+
 ```
 Write node to file → (Optional: MCP test_node) → Write node to file → ...
        ↓                                               ↓
@@ -237,6 +254,7 @@ Write(
 ```
 
 **Show user:**
+
 ```
 ✅ Package created: exports/technical_research_agent/
 📁 Files created:
@@ -311,6 +329,7 @@ Edit(
 ```
 
 **Show user:**
+
 ```
 ✅ Goal written to agent.py
 ✅ Metadata written to config.py
@@ -321,6 +340,7 @@ Open exports/technical_research_agent/agent.py to see the goal!
 ### Step 3: Add Nodes (Incremental)
 
 **⚠️ IMPORTANT:** Before adding any node with tools, you MUST:
+
 1. Call `mcp__agent-builder__list_mcp_tools()` to discover available tools
 2. Verify each tool exists in the response
 3. If a tool doesn't exist, inform the user and ask how to proceed
@@ -367,6 +387,7 @@ Edit(
 ```
 
 **Show user after each node:**
+
 ```
 ✅ Added analyze_request_node to nodes/__init__.py
 📊 Progress: 1/6 nodes added
@@ -445,6 +466,7 @@ Edit(
 ```
 
 **Show user:**
+
 ```
 ✅ Edges written to agent.py
 ✅ Graph configuration added
@@ -666,6 +688,7 @@ Write(
 ```
 
 **Show user:**
+
 ```
 ✅ Agent class written to agent.py
 ✅ Package exports finalized in __init__.py
@@ -865,6 +888,7 @@ print(f"✓ Validation: {validation['success']}")
 ```
 
 **User experience:**
+
 - Immediately sees node in their editor (from step 1)
 - Gets validation feedback (from step 2)
 - Can edit the file directly if needed
